@@ -1,0 +1,19 @@
+# portwatch configuration file
+
+# How often to scan for open ports (e.g. 30s, 1m, 5m)
+scan_interval: 30s
+
+# Path to write alert log output. Leave empty to use stdout.
+log_file: ""
+
+# Alert when a new port is detected as open.
+alert_on_new: true
+
+# Alert when a previously open port is no longer listening.
+alert_on_close: true
+
+# List of port numbers to silently ignore during scans.
+# Useful for well-known stable services you do not want alerts for.
+ignore_ports:
+  - 22    # SSH
+  - 53    # DNS
