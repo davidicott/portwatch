@@ -56,3 +56,22 @@ func TestReporterLastScanFormatted(t *testing.T) {
 		t.Error("expected a real timestamp, not 'never'")
 	}
 }
+
+func TestReporterAlertCounts(t *testing.T) {
+	r := New()
+	r.RecordAlerts(3, 5)
+
+	var buf bytes.Buffer
+	rp := NewReporter(&buf)
+	if err := rp.Report(r.Snapshot()); err != nil {
+		t.Fatalf("Report returned error: %v", err)
+	}
+
+	out := buf.String()
+	if !strings.Contains(out, "3") {
+		t.Errorf("expected output to contain ports_opened count 3, got:\n%s", out)
+	}
+	if !strings.Contains(out, "5") {
+		t.Errorf("expected output to contain ports_closed count 5, got:\n%s", out)
+	}
+}
