@@ -7,54 +7,71 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// Config holds the portwatch daemon configuration.
+// Config holds all runtime configuration for portwatch.
 type Config struct {
-	ScanInterval time.Duration `yaml:"scan_interval"`
-	LogFile      string        `yaml:"log_file"`
-	AlertOnNew   bool          `yaml:"alert_on_new"`
-	AlertOnClose bool          `yaml:"alert_on_close"`
-	IgnorePorts  []int         `yaml:"ignore_ports"`
+	// Interval between port scans.
+	Interval time.Duration `yaml:"interval"`
+
+	// SnapshotPath is the file used to persist the last known port state.
+	SnapshotPath string `yaml:"snapshot_path"`
+
+	// Ignore lists ports and protocols to suppress from alerting.
+	Ignore IgnoreConfig `yaml:"ignore"`
+
+	// LogLevel controls verbosity (debug, info, warn, error).
+	LogLevel string `yaml:"log_level"`
+}
+
+// IgnoreConfig holds exclusion rules.
+type IgnoreConfig struct {
+	Ports     []int    `yaml:"ports"`
+	Protocols []string `yaml:"protocols"`
+}
+
+// IgnoreSet is a fast-lookup representation of IgnoreConfig.
+type IgnoreSet struct {
+	Ports     map[int]struct{}
+	Protocols map[string]struct{}
 }
 
 // DefaultConfig returns a Config populated with sensible defaults.
-func DefaultConfig() *Config {
-	return &Config{
-		ScanInterval: 30 * time.Second,
-		LogFile:      "",
-		AlertOnNew:   true,
-		AlertOnClose: true,
-		IgnorePorts:  []int{},
+func DefaultConfig() Config {
+	return Config{
+		Interval:     15 * time.Second,
+		SnapshotPath: "/var/lib/portwatch/snapshot.json",
+		LogLevel:     "info",
 	}
 }
 
-// Load reads a YAML config file from path and merges it over the defaults.
-// If path is empty the default config is returned without error.
-func Load(path string) (*Config, error) {
+// Load reads a YAML config file from path.
+// If path is empty the default config is returned.
+func Load(path string) (Config, error) {
 	cfg := DefaultConfig()
 	if path == "" {
 		return cfg, nil
 	}
-
 	f, err := os.Open(path)
 	if err != nil {
-		return nil, err
+		return cfg, err
 	}
 	defer f.Close()
-
-	decoder := yaml.NewDecoder(f)
-	decoder.KnownFields(true)
-	if err := decoder.Decode(cfg); err != nil {
-		return nil, err
+	if err := yaml.NewDecoder(f).Decode(&cfg); err != nil {
+		return cfg, err
 	}
-
 	return cfg, nil
 }
 
-// IgnoreSet returns the ignore_ports list as a map for O(1) lookup.
-func (c *Config) IgnoreSet() map[int]struct{} {
-	s := make(map[int]struct{}, len(c.IgnorePorts))
-	for _, p := range c.IgnorePorts {
-		s[p] = struct{}{}
+// IgnoreSetFrom builds an IgnoreSet from a Config for O(1) lookups.
+func IgnoreSetFrom(cfg Config) IgnoreSet {
+	is := IgnoreSet{
+		Ports:     make(map[int]struct{}, len(cfg.Ignore.Ports)),
+		Protocols: make(map[string]struct{}, len(cfg.Ignore.Protocols)),
 	}
-	return s
+	for _, p := range cfg.Ignore.Ports {
+		is.Ports[p] = struct{}{}
+	}
+	for _, proto := range cfg.Ignore.Protocols {
+		is.Protocols[proto] = struct{}{}
+	}
+	return is
 }
