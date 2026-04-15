@@ -52,6 +52,30 @@ func TestExportJSON_ContainsEvents(t *testing.T) {
 	}
 }
 
+func TestExportJSON_PreservesEventFields(t *testing.T) {
+	h := New(10)
+	h.Record(makeExportEvent(alert.Opened, "tcp", "127.0.0.1", 8080))
+
+	var buf bytes.Buffer
+	if err := h.ExportJSON(&buf); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	var events []alert.Event
+	if err := json.Unmarshal(buf.Bytes(), &events); err != nil {
+		t.Fatalf("invalid JSON: %v", err)
+	}
+	if len(events) != 1 {
+		t.Fatalf("expected 1 event, got %d", len(events))
+	}
+	ev := events[0]
+	if ev.Kind != alert.Opened {
+		t.Errorf("expected Kind=Opened, got %v", ev.Kind)
+	}
+	if ev.Port.Proto != "tcp" || ev.Port.Addr != "127.0.0.1" || ev.Port.Port != 8080 || ev.Port.PID != 42 {
+		t.Errorf("unexpected port fields: %+v", ev.Port)
+	}
+}
+
 func TestExportTable_ContainsHeaders(t *testing.T) {
 	h := New(10)
 	h.Record(makeExportEvent(alert.Opened, "tcp", "127.0.0.1", 3000))
