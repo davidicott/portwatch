@@ -8,7 +8,14 @@
 // A Reporter formats a Counters snapshot into a human-readable tabular
 // summary suitable for logging or writing to a status file.
 //
-// Typical usage:
+// # Types
+//
+// Recorder is the primary type for accumulating metrics. It is safe for
+// concurrent use. Counters is a plain value type representing a point-in-time
+// snapshot of the recorded statistics. Reporter writes a formatted summary
+// of a Counters value to an [io.Writer].
+//
+// # Typical usage
 //
 //	rec := metrics.New()
 //
