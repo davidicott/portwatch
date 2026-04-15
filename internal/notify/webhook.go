@@ -18,12 +18,12 @@ type WebhookNotifier struct {
 }
 
 // NewWebhookNotifier creates a WebhookNotifier targeting url.
-func NewWebhookNotifier(url string, timeout time.Duration) *WebhookNotifier {
-	if timeout <=t	timeout = 5 * time.Second
+// If timeout is <= 0, a default of 5 seconds is used.
+func NewWebhookNotifier(url string, timeout time.Duration) *Webhtif timeout <= 0 {
+		timeout = 5 * time.Second
 	}
 	return &WebhookNotifier{
-		url:    url,
-		client: &http.Client{Timeout: timeout},
+		url:    urllient: &http.Client{Timeout: timeout},
 	}
 }
 
@@ -41,7 +41,7 @@ func (w *WebhookNotifier) Notify(ctx context.Context, events []alert.Event) erro
 	if err != nil {
 		return fmt.Errorf("webhook notifier: marshal: %w", err)
 	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, w.url, bytes.NewReader(buf))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, w.url, bytes.NewReader(b))
 	if err != nil {
 		return fmt.Errorf("webhook notifier: build request: %w", err)
 	}
