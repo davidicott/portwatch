@@ -1,59 +1,72 @@
 package config
 
-// NotifierConfig holds configuration for all supported notification channels.
-// Each field is optional; a nil/zero value means the notifier is disabled.
+// NotifierConfig holds configuration for all supported notifiers.
 type NotifierConfig struct {
-	Stdout    bool              `yaml:"stdout"`
-	Webhook   *WebhookConfig    `yaml:"webhook,omitempty"`
-	Slack     *SlackConfig      `yaml:"slack,omitempty"`
-	Email     *EmailConfig      `yaml:"email,omitempty"`
-	PagerDuty *PagerDutyConfig  `yaml:"pagerduty,omitempty"`
-	OpsGenie  *OpsGenieConfig   `yaml:"opsgenie,omitempty"`
-	Teams     *TeamsConfig      `yaml:"teams,omitempty"`
-	Discord   *DiscordConfig    `yaml:"discord,omitempty"`
-	VictorOps *VictorOpsConfig  `yaml:"victorops,omitempty"`
+	Webhook   WebhookConfig   `yaml:"webhook"`
+	Slack     SlackConfig     `yaml:"slack"`
+	Email     EmailConfig     `yaml:"email"`
+	PagerDuty PagerDutyConfig `yaml:"pagerduty"`
+	OpsGenie  OpsGenieConfig  `yaml:"opsgenie"`
+	Teams     TeamsConfig     `yaml:"teams"`
+	Discord   DiscordConfig   `yaml:"discord"`
+	VictorOps VictorOpsConfig `yaml:"victorops"`
+	Syslog    SyslogConfig    `yaml:"syslog"`
+	Telegram  TelegramConfig  `yaml:"telegram"`
 }
 
-// WebhookConfig configures a generic webhook notifier.
 type WebhookConfig struct {
-	URL string `yaml:"url"`
+	Enabled bool   `yaml:"enabled"`
+	URL     string `yaml:"url"`
 }
 
-// SlackConfig configures the Slack notifier.
 type SlackConfig struct {
+	Enabled    bool   `yaml:"enabled"`
 	WebhookURL string `yaml:"webhook_url"`
 }
 
-// EmailConfig configures the SMTP email notifier.
 type EmailConfig struct {
-	SMTPHost string   `yaml:"smtp_host"`
-	SMTPPort int      `yaml:"smtp_port"`
-	From     string   `yaml:"from"`
-	To       []string `yaml:"to"`
+	Enabled  bool   `yaml:"enabled"`
+	SMTPHost string `yaml:"smtp_host"`
+	SMTPPort int    `yaml:"smtp_port"`
+	From     string `yaml:"from"`
+	To       string `yaml:"to"`
+	Username string `yaml:"username"`
+	Password string `yaml:"password"`
 }
 
-// PagerDutyConfig configures the PagerDuty notifier.
 type PagerDutyConfig struct {
+	Enabled    bool   `yaml:"enabled"`
 	RoutingKey string `yaml:"routing_key"`
 }
 
-// OpsGenieConfig configures the OpsGenie notifier.
 type OpsGenieConfig struct {
-	APIKey string `yaml:"api_key"`
+	Enabled bool   `yaml:"enabled"`
+	APIKey  string `yaml:"api_key"`
 }
 
-// TeamsConfig configures the Microsoft Teams notifier.
 type TeamsConfig struct {
+	Enabled    bool   `yaml:"enabled"`
 	WebhookURL string `yaml:"webhook_url"`
 }
 
-// DiscordConfig configures the Discord notifier.
 type DiscordConfig struct {
+	Enabled    bool   `yaml:"enabled"`
 	WebhookURL string `yaml:"webhook_url"`
 }
 
-// VictorOpsConfig configures the VictorOps notifier.
 type VictorOpsConfig struct {
-	RoutingKey      string `yaml:"routing_key"`
-	RestEndpointURL string `yaml:"rest_endpoint_url"`
+	Enabled    bool   `yaml:"enabled"`
+	APIURL     string `yaml:"api_url"`
+	RoutingKey string `yaml:"routing_key"`
+}
+
+type SyslogConfig struct {
+	Enabled bool   `yaml:"enabled"`
+	Tag     string `yaml:"tag"`
+}
+
+type TelegramConfig struct {
+	Enabled bool   `yaml:"enabled"`
+	Token   string `yaml:"token"`
+	ChatID  string `yaml:"chat_id"`
 }
