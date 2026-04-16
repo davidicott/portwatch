@@ -1,5 +1,7 @@
 package scanner
 
+import "sort"
+
 // Diff holds the changes detected between two port snapshots.
 type Diff struct {
 	Opened []Port
@@ -13,6 +15,7 @@ func (d Diff) HasChanges() bool {
 
 // Compare computes the difference between a previous and current
 // set of ports, returning newly opened and newly closed ports.
+// Results are sorted by port number for deterministic output.
 func Compare(previous, current []Port) Diff {
 	prevMap := toMap(previous)
 	currMap := toMap(current)
@@ -30,6 +33,9 @@ func Compare(previous, current []Port) Diff {
 			diff.Closed = append(diff.Closed, port)
 		}
 	}
+
+	sort.Slice(diff.Opened, func(i, j int) bool { return diff.Opened[i].Number < diff.Opened[j].Number })
+	sort.Slice(diff.Closed, func(i, j int) bool { return diff.Closed[i].Number < diff.Closed[j].Number })
 
 	return diff
 }
