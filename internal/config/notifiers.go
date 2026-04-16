@@ -2,6 +2,7 @@ package config
 
 // NotifierConfig holds configuration for all supported notifiers.
 type NotifierConfig struct {
+	Stdout    StdoutConfig    `yaml:"stdout"`
 	Webhook   WebhookConfig   `yaml:"webhook"`
 	Slack     SlackConfig     `yaml:"slack"`
 	Email     EmailConfig     `yaml:"email"`
@@ -12,6 +13,11 @@ type NotifierConfig struct {
 	VictorOps VictorOpsConfig `yaml:"victorops"`
 	Syslog    SyslogConfig    `yaml:"syslog"`
 	Telegram  TelegramConfig  `yaml:"telegram"`
+	SNS       SNSConfig       `yaml:"sns"`
+}
+
+type StdoutConfig struct {
+	Enabled bool `yaml:"enabled"`
 }
 
 type WebhookConfig struct {
@@ -56,7 +62,7 @@ type DiscordConfig struct {
 
 type VictorOpsConfig struct {
 	Enabled    bool   `yaml:"enabled"`
-	APIURL     string `yaml:"api_url"`
+	URL        string `yaml:"url"`
 	RoutingKey string `yaml:"routing_key"`
 }
 
@@ -66,7 +72,14 @@ type SyslogConfig struct {
 }
 
 type TelegramConfig struct {
-	Enabled bool   `yaml:"enabled"`
-	Token   string `yaml:"token"`
-	ChatID  string `yaml:"chat_id"`
+	Enabled  bool   `yaml:"enabled"`
+	BotToken string `yaml:"bot_token"`
+	ChatID   string `yaml:"chat_id"`
+}
+
+// SNSConfig holds AWS SNS notifier settings.
+type SNSConfig struct {
+	Enabled  bool   `yaml:"enabled"`
+	TopicARN string `yaml:"topic_arn"`
+	Region   string `yaml:"region"`
 }

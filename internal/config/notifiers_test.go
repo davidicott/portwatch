@@ -6,62 +6,85 @@ import (
 
 func TestNotifierConfig_Defaults(t *testing.T) {
 	var nc NotifierConfig
-	if nc.Stdout {
-		t.Error("stdout should default to false")
+	if nc.Stdout.Enabled {
+		t.Error("stdout should be disabled by default")
 	}
-	if nc.Webhook != nil {
-		t.Error("webhook should default to nil")
-	}
-	if nc.VictorOps != nil {
-		t.Error("victorops should default to nil")
+	if nc.SNS.Enabled {
+		t.Error("sns should be disabled by default")
 	}
 }
 
 func TestNotifierConfig_VictorOpsFields(t *testing.T) {
 	nc := NotifierConfig{
-		VictorOps: &VictorOpsConfig{
-			RoutingKey:      "rk-abc",
-			RestEndpointURL: "https://alert.victorops.com/integrations/generic",
+		VictorOps: VictorOpsConfig{
+			Enabled:    true,
+			URL:        "https://alert.victorops.com/integrations/generic",
+			RoutingKey: "default",
 		},
 	}
-	if nc.VictorOps.RoutingKey != "rk-abc" {
-		t.Errorf("unexpected routing key: %s", nc.VictorOps.RoutingKey)
+	if !nc.VictorOps.Enabled {
+		t.Error("expected VictorOps to be enabled")
 	}
-	if nc.VictorOps.RestEndpointURL == "" {
-		t.Error("rest endpoint url should not be empty")
+	if nc.VictorOps.RoutingKey != "default" {
+		t.Errorf("unexpected routing key: %s", nc.VictorOps.RoutingKey)
 	}
 }
 
 func TestNotifierConfig_EmailFields(t *testing.T) {
 	nc := NotifierConfig{
-		Email: &EmailConfig{
+		Email: EmailConfig{
+			Enabled:  true,
 			SMTPHost: "smtp.example.com",
 			SMTPPort: 587,
 			From:     "alerts@example.com",
-			To:       []string{"ops@example.com"},
+			To:       "ops@example.com",
 		},
 	}
 	if nc.Email.SMTPPort != 587 {
-		t.Errorf("unexpected smtp port: %d", nc.Email.SMTPPort)
+		t.Errorf("expected port 587, got %d", nc.Email.SMTPPort)
 	}
-	if len(nc.Email.To) != 1 {
-		t.Errorf("expected 1 recipient, got %d", len(nc.Email.To))
+}
+
+func TestNotifierConfig_SNSFields(t *testing.T) {
+	nc := NotifierConfig{
+		SNS: SNSConfig{
+			Enabled:  true,
+			TopicARN: "arn:aws:sns:us-east-1:123456789012:portwatch",
+			Region:   "us-east-1",
+		},
+	}
+	if !nc.SNS.Enabled {
+		t.Error("expected SNS to be enabled")
+	}
+	if nc.SNS.Region != "us-east-1" {
+		t.Errorf("unexpected region: %s", nc.SNS.Region)
+	}
+	if nc.SNS.TopicARN == "" {
+		t.Error("expected non-empty topic ARN")
 	}
 }
 
 func TestNotifierConfig_MultipleEnabled(t *testing.T) {
 	nc := NotifierConfig{
-		Stdout:  true,
-		Slack:   &SlackConfig{WebhookURL: "https://hooks.slack.com/x"},
-		Discord: &DiscordConfig{WebhookURL: "https://discord.com/api/webhooks/x"},
+		Stdout:  StdoutConfig{Enabled: true},
+		Slack:   SlackConfig{Enabled: true, WebhookURL: "https://hooks.slack.com/x"},
+		SNS:     SNSConfig{Enabled: true, TopicARN: "arn:aws:sns:us-east-1:123:test", Region: "us-east-1"},
+		Discord: DiscordConfig{Enabled: false},
 	}
-	if !nc.Stdout {
-		t.Error("stdout should be true")
+	count := 0
+	if nc.Stdout.Enabled {
+		count++
 	}
-	if nc.Slack == nil {
-		t.Error("slack should not be nil")
+	if nc.Slack.Enabled {
+		count++
 	}
-	if nc.Discord == nil {
-		t.Error("discord should not be nil")
+	if nc.SNS.Enabled {
+		count++
+	}
+	if nc.Discord.Enabled {
+		count++
+	}
+	if count != 3 {
+		t.Errorf("expected 3 enabled notifiers, got %d", count)
 	}
 }
