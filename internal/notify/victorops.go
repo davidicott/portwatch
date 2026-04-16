@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"time"
 
@@ -56,9 +57,10 @@ func (v *VictorOpsNotifier) Notify(events []alert.Event) error {
 		if err != nil {
 			return fmt.Errorf("victorops: post: %w", err)
 		}
+		respBody, _ := io.ReadAll(io.LimitReader(resp.Body, 512))
 		resp.Body.Close()
 		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-			return fmt.Errorf("victorops: unexpected status %d", resp.StatusCode)
+			return fmt.Errorf("victorops: unexpected status %d: %s", resp.StatusCode, string(respBody))
 		}
 	}
 	return nil
