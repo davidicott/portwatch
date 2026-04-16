@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"time"
 
@@ -53,7 +54,8 @@ func (s *SlackNotifier) Notify(events []alert.Event) error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return fmt.Errorf("slack: unexpected status %d", resp.StatusCode)
+		respBody, _ := io.ReadAll(io.LimitReader(resp.Body, 256))
+		return fmt.Errorf("slack: unexpected status %d: %s", resp.StatusCode, bytes.TrimSpace(respBody))
 	}
 	return nil
 }
