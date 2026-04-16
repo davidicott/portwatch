@@ -16,8 +16,7 @@ type Notifier interface {
 	Notify(ctx context.Context, events []alert.Event) error
 }
 
-// StdoutNotifier writes human-readable alerts to an io.Writer.
-type StdoutNotifier struct {
+// StdoutNotifier writes human-readable alerts to anoutNotifier struct {
 	w io.Writer
 }
 
@@ -31,11 +30,12 @@ func NewStdoutNotifier(w io.Writer) *StdoutNotifier {
 }
 
 // Notify writes each event as a formatted line to the writer.
+// It stops and returns an error on the first write failure.
 func (s *StdoutNotifier) Notify(_ context.Context, events []alert.Event) error {
 	for _, e := range events {
-		line := fmt.Sprintf("[portwatch] %s %s\n", strings.ToUpper(e.Kind), e.Port)
+		line := fmt.Sprintf("[portwatch] %s %s\n", strings.ToUpper(string(e.Kind)), e.Port)
 		if _, err := fmt.Fprint(s.w, line); err != nil {
-			return fmt.Errorf("stdout notifier: %w", err)
+			return fmt.Errorf("stdout notifier: write failed for port %s: %w", e.Port, err)
 		}
 	}
 	return nil
