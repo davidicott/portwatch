@@ -61,3 +61,41 @@ func TestRocketChatNotifier_NonSuccessStatus(t *testing.T) {
 		t.Fatal("expected error on non-2xx status")
 	}
 }
+
+func TestRocketChatNotifier_PayloadContainsPortAndKind(t *testing.T) {
+	var got map[string]string
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, _ := io.ReadAll(r.Body)
+		_ = json.Unmarshal(body, &got)
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer ts.Close()
+
+	n := NewRocketChatNotifier(ts.URL)
+	events := []alert.Event{makeRCEvent("opened", "tcp:4444")}
+	if err := n.Notify(events); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	text := got["text"]
+	if text == "" {
+		t.Fatal("expected non-empty text in payload")
+	}
+	for _, substr := range []string{"tcp:4444", "opened"} {
+		if !contains(text, substr) {
+			t.Errorf("expected payload text to contain %q, got: %s", substr, text)
+		}
+	}
+}
+
+// contains is a simple substring helper for test assertions.
+func contains(s, substr string) bool {
+	return len(s) >= len(substr) && (s == substr || len(substr) == 0 ||
+		(func() bool {
+			for i := 0; i <= len(s)-len(substr); i++ {
+				if s[i:i+len(substr)] == substr {
+					return true
+				}
+			}
+			return false
+		})())
+}
