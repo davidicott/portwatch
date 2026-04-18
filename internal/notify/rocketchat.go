@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/user/portwatch/internal/alert"
@@ -51,7 +52,8 @@ func (r *RocketChatNotifier) Notify(events []alert.Event) error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return fmt.Errorf("rocketchat: unexpected status %d", resp.StatusCode)
+		respBody, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("rocketchat: unexpected status %d: %s", resp.StatusCode, string(respBody))
 	}
 	return nil
 }
