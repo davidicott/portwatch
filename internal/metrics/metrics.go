@@ -65,3 +65,13 @@ func (r *Recorder) Snapshot() Counters {
 func (r *Recorder) Uptime() time.Duration {
 	return time.Since(r.counters.StartTime)
 }
+
+// Reset zeroes all counters while preserving the original start time.
+func (r *Recorder) Reset() {
+	r.counters.mu.Lock()
+	defer r.counters.mu.Unlock()
+	start := r.counters.StartTime
+	r.counters = Counters{
+		StartTime: start,
+	}
+}
