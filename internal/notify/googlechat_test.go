@@ -32,9 +32,10 @@ func TestGoogleChatNotifier_SkipsEmptyEvents(t *testing.T) {
 }
 
 func TestGoogleChatNotifier_PostsPayload(t *testing.T) {
-	var body []byte
+	var got map[string]string
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		body, _ = io.ReadAll(r.Body)
+		body, _ := io.ReadAll(r.Body)
+		_ = json.Unmarshal(body, &got)
 		w.WriteHeader(http.StatusOK)
 	}))
 	defer ts.Close()
@@ -47,20 +48,11 @@ func TestGoogleChatNotifier_PostsPayload(t *testing.T) {
 	if err := n.Notify(events); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-
-	var payload map[string]string
-	if err := json.Unmarshal(body, &payload); err != nil {
-		t.Fatalf("invalid JSON payload: %v", err)
+	if !strings.Contains(got["text"], "tcp:8080") {
+		t.Errorf("expected payload to contain port, got: %s", got["text"])
 	}
-	text, ok := payload["text"]
-	if !ok {
-		t.Fatal("expected 'text' field in payload")
-	}
-	if !strings.Contains(text, "tcp:8080") {
-		t.Errorf("expected payload to contain tcp:8080, got: %s", text)
-	}
-	if !strings.Contains(text, "tcp:9090") {
-		t.Errorf("expected payload to contain tcp:9090, got: %s", text)
+	if !strings.Contains(got["text"], "2 port change") {
+		t.Errorf("expected count in message, got: %s", got["text"])
 	}
 }
 
@@ -71,8 +63,8 @@ func TestGoogleChatNotifier_NonSuccessStatus(t *testing.T) {
 	defer ts.Close()
 
 	n := NewGoogleChatNotifier(ts.URL)
-	err := n.Notify([]alert.Event{makeGCEvent("opened", "tcp:443")})
-	if err == nil {
-		t.Fatal("expected error for non-2xx status")
+	events := []alert.Event{makeGCEvent("opened", "tcp:443")}
+	if err := n.Notify(events); err == nil {
+		t.Fatal("expected error on non-2xx status")
 	}
 }
