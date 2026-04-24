@@ -3,13 +3,13 @@
 // # Google Chat Notifier
 //
 // The GoogleChatNotifier sends port change alerts to a Google Chat space
-// using an incoming webhook URL.
+// via an incoming webhook URL.
 //
 // Usage:
 //
-//	notifier := notify.NewGoogleChatNotifier("https://chat.googleapis.com/v1/spaces/.../messages?key=...")
+//	notifier := notify.NewGoogleChatNotifier("https://chat.googleapis.com/...")
 //	err := notifier.Notify(events)
 //
-// The message includes a summary count and a bulleted list of each
-// port event with its kind (opened/closed) and port identifier.
+// The webhook URL can be obtained from a Google Chat space by configuring
+// an incoming webhook integration under "Manage webhooks".
 package notify

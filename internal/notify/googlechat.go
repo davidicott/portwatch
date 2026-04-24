@@ -9,13 +9,13 @@ import (
 	"github.com/user/portwatch/internal/alert"
 )
 
-// GoogleChatNotifier sends port change alerts to a Google Chat webhook.
+// GoogleChatNotifier sends alerts to a Google Chat webhook.
 type GoogleChatNotifier struct {
 	webhookURL string
 	client     *http.Client
 }
 
-// NewGoogleChatNotifier creates a GoogleChatNotifier that posts to the given webhook URL.
+// NewGoogleChatNotifier creates a new GoogleChatNotifier.
 func NewGoogleChatNotifier(webhookURL string) *GoogleChatNotifier {
 	return &GoogleChatNotifier{
 		webhookURL: webhookURL,
@@ -23,21 +23,23 @@ func NewGoogleChatNotifier(webhookURL string) *GoogleChatNotifier {
 	}
 }
 
-// Notify sends a Google Chat card message for each alert event.
+type googleChatPayload struct {
+	Text string `json:"text"`
+}
+
+// Notify sends port change events to Google Chat.
 func (n *GoogleChatNotifier) Notify(events []alert.Event) error {
 	if len(events) == 0 {
 		return nil
 	}
 
-	var text string
+	var buf bytes.Buffer
+	buf.WriteString(fmt.Sprintf("*portwatch* detected %d port change(s):\n", len(events)))
 	for _, e := range events {
-		text += fmt.Sprintf("*[%s]* %s/%d\n", e.Kind, e.Port.Protocol, e.Port.Port)
+		buf.WriteString(fmt.Sprintf("• [%s] %s\n", e.Kind, e.Port))
 	}
 
-	payload := map[string]interface{}{
-		"text": fmt.Sprintf("🔍 *portwatch alert* — %d event(s)\n%s", len(events), text),
-	}
-
+	payload := googleChatPayload{Text: buf.String()}
 	body, err := json.Marshal(payload)
 	if err != nil {
 		return fmt.Errorf("googlechat: marshal payload: %w", err)
