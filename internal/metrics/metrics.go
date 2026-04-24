@@ -75,3 +75,15 @@ func (r *Recorder) Reset() {
 		StartTime: start,
 	}
 }
+
+// ScanRate returns the average number of scans performed per minute since
+// the recorder was created. It returns 0 if no scans have been recorded yet.
+func (r *Recorder) ScanRate() float64 {
+	r.counters.mu.RLock()
+	defer r.counters.mu.RUnlock()
+	uptime := time.Since(r.counters.StartTime).Minutes()
+	if uptime <= 0 || r.counters.ScansTotal == 0 {
+		return 0
+	}
+	return float64(r.counters.ScansTotal) / uptime
+}
