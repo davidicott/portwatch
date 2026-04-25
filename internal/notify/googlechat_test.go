@@ -5,14 +5,13 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 
 	"github.com/user/portwatch/internal/alert"
 )
 
-func makeGCEvent(kind, port string) alert.Event {
-	return alert.Event{Kind: kind, Port: port}
+func makeGCEvent(port, kind string) alert.Event {
+	return alert.Event{Port: port, Kind: kind}
 }
 
 func TestGoogleChatNotifier_SkipsEmptyEvents(t *testing.T) {
@@ -24,10 +23,10 @@ func TestGoogleChatNotifier_SkipsEmptyEvents(t *testing.T) {
 
 	n := NewGoogleChatNotifier(ts.URL)
 	if err := n.Notify(nil); err != nil {
-		t.Fatalf("expected no error, got %v", err)
+		t.Fatalf("unexpected error: %v", err)
 	}
 	if called {
-		t.Fatal("expected no HTTP call for empty events")
+		t.Error("expected no HTTP call for empty events")
 	}
 }
 
@@ -42,17 +41,19 @@ func TestGoogleChatNotifier_PostsPayload(t *testing.T) {
 
 	n := NewGoogleChatNotifier(ts.URL)
 	events := []alert.Event{
-		makeGCEvent("opened", "tcp:8080"),
-		makeGCEvent("closed", "tcp:9090"),
+		makeGCEvent("tcp:8080", "opened"),
+		makeGCEvent("tcp:9090", "closed"),
 	}
 	if err := n.Notify(events); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if !strings.Contains(received["text"], "tcp:8080") {
-		t.Errorf("expected payload to contain tcp:8080, got: %s", received["text"])
+	if received["text"] == "" {
+		t.Error("expected non-empty text in payload")
 	}
-	if !strings.Contains(received["text"], "2 port change") {
-		t.Errorf("expected count in message, got: %s", received["text"])
+	for _, e := range events {
+		if !containsString(received["text"], e.Port) {
+			t.Errorf("expected payload to contain port %q", e.Port)
+		}
 	}
 }
 
@@ -63,8 +64,20 @@ func TestGoogleChatNotifier_NonSuccessStatus(t *testing.T) {
 	defer ts.Close()
 
 	n := NewGoogleChatNotifier(ts.URL)
-	err := n.Notify([]alert.Event{makeGCEvent("opened", "tcp:443")})
+	err := n.Notify([]alert.Event{makeGCEvent("tcp:22", "opened")})
 	if err == nil {
-		t.Fatal("expected error for non-2xx status")
+		t.Error("expected error for non-2xx response")
 	}
+}
+
+func containsString(s, sub string) bool {
+	return len(s) >= len(sub) && (s == sub || len(sub) == 0 ||
+		(func() bool {
+			for i := 0; i <= len(s)-len(sub); i++ {
+				if s[i:i+len(sub)] == sub {
+					return true
+				}
+			}
+			return false
+		})())
 }

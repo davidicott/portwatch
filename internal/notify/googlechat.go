@@ -23,10 +23,6 @@ func NewGoogleChatNotifier(webhookURL string) *GoogleChatNotifier {
 	}
 }
 
-type googleChatPayload struct {
-	Text string `json:"text"`
-}
-
 // Notify sends port change events to Google Chat.
 func (n *GoogleChatNotifier) Notify(events []alert.Event) error {
 	if len(events) == 0 {
@@ -34,12 +30,12 @@ func (n *GoogleChatNotifier) Notify(events []alert.Event) error {
 	}
 
 	var buf bytes.Buffer
-	buf.WriteString(fmt.Sprintf("*portwatch* detected %d port change(s):\n", len(events)))
+	buf.WriteString(fmt.Sprintf("*portwatch alert* — %d change(s) detected\n", len(events)))
 	for _, e := range events {
-		buf.WriteString(fmt.Sprintf("• [%s] %s\n", e.Kind, e.Port))
+		buf.WriteString(fmt.Sprintf("• `%s` %s\n", e.Port, e.Kind))
 	}
 
-	payload := googleChatPayload{Text: buf.String()}
+	payload := map[string]string{"text": buf.String()}
 	body, err := json.Marshal(payload)
 	if err != nil {
 		return fmt.Errorf("googlechat: marshal payload: %w", err)
