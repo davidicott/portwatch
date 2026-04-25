@@ -35,3 +35,16 @@ func TestHipChatConfig_Fields(t *testing.T) {
 		t.Errorf("unexpected token: %s", c.Token)
 	}
 }
+
+func TestHipChatConfig_DefaultsNotMutated(t *testing.T) {
+	d1 := hipChatDefaults()
+	d2 := hipChatDefaults()
+	d1.ServerURL = "https://modified.example.com"
+	d1.Token = "mutated"
+	if d2.ServerURL != "https://api.hipchat.com" {
+		t.Errorf("defaults mutated: server_url changed to %s", d2.ServerURL)
+	}
+	if d2.Token != "" {
+		t.Errorf("defaults mutated: token changed to %s", d2.Token)
+	}
+}
