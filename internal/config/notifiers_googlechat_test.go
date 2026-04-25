@@ -1,23 +1,21 @@
 package config
 
-import (
-	"testing"
-)
+import "testing"
 
 func TestGoogleChatConfig_Defaults(t *testing.T) {
-	defaults := googlechatDefaults()
-	if defaults.Enabled {
+	d := googlechatDefaults()
+	if d.Enabled {
 		t.Error("expected Enabled to be false by default")
 	}
-	if defaults.WebhookURL != "" {
-		t.Errorf("expected empty WebhookURL, got %q", defaults.WebhookURL)
+	if d.WebhookURL != "" {
+		t.Errorf("expected empty WebhookURL, got %q", d.WebhookURL)
 	}
 }
 
 func TestGoogleChatConfig_Fields(t *testing.T) {
-	cfg := GoogleChatNotifierConfig{
+	cfg := GoogleChatConfig{
 		Enabled:    true,
-		WebhookURL: "https://chat.googleapis.com/v1/spaces/xxx/messages?key=yyy",
+		WebhookURL: "https://chat.googleapis.com/v1/spaces/XXX/messages?key=YYY",
 	}
 	if !cfg.Enabled {
 		t.Error("expected Enabled to be true")
