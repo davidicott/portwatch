@@ -27,25 +27,24 @@ type googleChatPayload struct {
 	Text string `json:"text"`
 }
 
-// Notify sends port change events to Google Chat.
-func (g *GoogleChatNotifier) Notify(events []alert.Event) error {
+// Notify sends events to the configured Google Chat webhook.
+func (n *GoogleChatNotifier) Notify(events []alert.Event) error {
 	if len(events) == 0 {
 		return nil
 	}
 
 	var buf bytes.Buffer
-	buf.WriteString(fmt.Sprintf("*portwatch alert* — %d change(s) detected\n", len(events)))
 	for _, e := range events {
-		buf.WriteString(fmt.Sprintf("• [%s] %s\n", e.Kind, e.Port))
+		buf.WriteString(fmt.Sprintf("[%s] %s:%d/%s\n", e.Kind, e.Port.Host, e.Port.Port, e.Port.Proto))
 	}
 
 	payload := googleChatPayload{Text: buf.String()}
 	body, err := json.Marshal(payload)
 	if err != nil {
-		return fmt.Errorf("googlechat: marshal payload: %w", err)
+		return fmt.Errorf("googlechat: marshal: %w", err)
 	}
 
-	resp, err := g.client.Post(g.webhookURL, "application/json", bytes.NewReader(body))
+	resp, err := n.client.Post(n.webhookURL, "application/json", bytes.NewReader(body))
 	if err != nil {
 		return fmt.Errorf("googlechat: post: %w", err)
 	}

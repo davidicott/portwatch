@@ -1,23 +1,22 @@
 package config
 
-// GoogleChatConfig holds configuration for the Google Chat notifier.
-type GoogleChatConfig struct {
+// GoogleChatNotifierConfig holds configuration for the Google Chat notifier.
+type GoogleChatNotifierConfig struct {
 	Enabled    bool   `yaml:"enabled"`
 	WebhookURL string `yaml:"webhook_url"`
 }
 
-func googlechatDefaults() GoogleChatConfig {
-	return GoogleChatConfig{
+func googlechatDefaults() GoogleChatNotifierConfig {
+	return GoogleChatNotifierConfig{
 		Enabled:    false,
 		WebhookURL: "",
 	}
 }
 
 func init() {
-	registerNotifierDefaults("googlechat", func(n *NotifierConfig) {
-		if n.GoogleChat == nil {
-			d := googlechatDefaults()
-			n.GoogleChat = &d
+	registerNotifierDefaults("googlechat", func(n *NotifiersConfig) {
+		if n.GoogleChat == (GoogleChatNotifierConfig{}) {
+			n.GoogleChat = googlechatDefaults()
 		}
 	})
 }
