@@ -14,9 +14,10 @@ func googlechatDefaults() GoogleChatNotifierConfig {
 }
 
 func init() {
-	registerNotifierDefaults("googlechat", func(n *NotifiersConfig) {
-		if n.GoogleChat == (GoogleChatNotifierConfig{}) {
-			n.GoogleChat = googlechatDefaults()
+	registerNotifierDefaults("googlechat", func(nc *NotifiersConfig) {
+		if nc.GoogleChat == nil {
+			defaults := googlechatDefaults()
+			nc.GoogleChat = &defaults
 		}
 	})
 }
