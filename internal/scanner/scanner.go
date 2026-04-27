@@ -5,6 +5,7 @@ import (
 	"net"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // Port represents an open port with its protocol and process info.
@@ -28,12 +29,15 @@ func (p Port) Key() string {
 // Scanner is responsible for discovering open ports on the system.
 type Scanner struct {
 	Protocols []string
+	// DialTimeout is the timeout used when probing each port.
+	DialTimeout time.Duration
 }
 
 // New creates a new Scanner with default protocols.
 func New() *Scanner {
 	return &Scanner{
-		Protocols: []string{"tcp", "tcp6"},
+		Protocols:   []string{"tcp", "tcp6"},
+		DialTimeout: 500 * time.Millisecond,
 	}
 }
 
@@ -42,7 +46,7 @@ func New() *Scanner {
 func (s *Scanner) Scan() ([]Port, error) {
 	var ports []Port
 	for _, proto := range s.Protocols {
-		listeners, err := getListeners(proto)
+		listeners, err := s.getListeners(proto)
 		if err != nil {
 			return nil, fmt.Errorf("scan %s: %w", proto, err)
 		}
@@ -52,12 +56,13 @@ func (s *Scanner) Scan() ([]Port, error) {
 }
 
 // getListeners probes ports 1–1024 for the given protocol.
-func getListeners(proto string) ([]Port, error) {
+func (s *Scanner) getListeners(proto string) ([]Port, error) {
 	var open []Port
 	baseProto := strings.TrimSuffix(proto, "6")
+	dialer := net.Dialer{Timeout: s.DialTimeout}
 	for p := 1; p <= 1024; p++ {
 		addr := net.JoinHostPort("localhost", strconv.Itoa(p))
-		conn, err := net.Dial(baseProto, addr)
+		conn, err := dialer.Dial(baseProto, addr)
 		if err == nil {
 			conn.Close()
 			open = append(open, Port{
